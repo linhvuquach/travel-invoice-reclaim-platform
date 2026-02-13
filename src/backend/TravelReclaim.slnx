@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="TravelReclaim.Api/TravelReclaim.Api.csproj" />
+  <Project Path="TravelReclaim.Application/TravelReclaim.Application.csproj" />
+  <Project Path="TravelReclaim.Domain/TravelReclaim.Domain.csproj" />
+  <Project Path="TravelReclaim.Infrastructure/TravelReclaim.Infrastructure.csproj" />
+  <Project Path="TravelReclaim.Tests.Integration/TravelReclaim.Tests.Integration.csproj" />
+  <Project Path="TravelReclaim.Tests.Unit/TravelReclaim.Tests.Unit.csproj" />
+</Solution>
