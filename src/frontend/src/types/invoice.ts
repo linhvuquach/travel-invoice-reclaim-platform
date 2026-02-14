@@ -21,10 +21,10 @@ export interface Invoice {
 }
 
 export interface PagedResponse<T> {
-    items: T[];
-    page: number;
-    totalCount: number;
-    totalPage: number;
+  items: T[];
+  page: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 export interface CreateInvoiceRequest {
