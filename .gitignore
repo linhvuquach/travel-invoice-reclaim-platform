@@ -40,6 +40,8 @@ artifacts/
 [Rr]elease/
 x64/
 x86/
+bin/*
+obj/*
 
 # NuGet
 **/[Pp]ackages/*
