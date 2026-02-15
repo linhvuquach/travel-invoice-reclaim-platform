@@ -1,3 +1,5 @@
+"use-client";
+
 import { getInvoices } from "@/lib/api/invoices";
 import { Invoice, PagedResponse } from "@/types/invoice";
 import { useCallback, useEffect, useState } from "react";
@@ -7,32 +9,38 @@ export function useInvoices(initialPage = 1, pageSize = 10) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(initialPage);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchInvoices = useCallback(() => {
+  const refetch = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
-    getInvoices({ page, pageSize })
-      .then((result) => {
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getInvoices({ page, pageSize });
         if (!cancelled) setData(result);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.messge);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(true);
-      });
+      } catch (error) {
+        if (!cancelled)
+          setError(
+            error instanceof Error ? error.message : "Failed to load invoices",
+          );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchData();
 
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, refreshKey]);
 
-  useEffect(() => {
-    const cleanup = fetchInvoices();
-    return cleanup;
-  }, [fetch]);
-
-  return { data, loading, error, page, setPage, refetch: fetchInvoices };
+  return { data, loading, error, page, setPage, refetch };
 }

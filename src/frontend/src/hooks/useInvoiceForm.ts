@@ -1,6 +1,8 @@
+"use client";
+
 import { createInvoice } from "@/lib/api/invoices";
 import { CreateInvoiceRequest } from "@/types/invoice";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useCallback, useReducer } from "react";
 
 type FormState = {
@@ -74,7 +76,7 @@ function validate(values: CreateInvoiceRequest): Record<string, string> {
   return errors;
 }
 
-export function useInvoiceFrom() {
+export function useInvoiceForm() {
   const [state, dispatch] = useReducer(formReducer, initialState);
   const router = useRouter();
 

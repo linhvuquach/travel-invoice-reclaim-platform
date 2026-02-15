@@ -2,19 +2,11 @@ import { Invoice } from "@/types/invoice";
 import Link from "next/link";
 import styles from "@/styles/invoices.module.css";
 import { formatCurrency, formatDate } from "@/utils";
+import StatusBadge from "../ui/StatusBadge";
 
 interface InvoiceListProps {
   invoices: Invoice[];
 }
-
-const statusBadgeMap: Record<string, string> = {
-  Draft: styles.badgeDraft,
-  Submitted: styles.badgeSubmitted,
-  Validated: styles.badgeValidated,
-  Rejected: styles.badgeRejected,
-  ReclaimPending: styles.badgeReclaimPending,
-  Reclaimed: styles.badgeReclaimed,
-};
 
 export default function InvoiceList({ invoices }: InvoiceListProps) {
   return (
@@ -30,11 +22,7 @@ export default function InvoiceList({ invoices }: InvoiceListProps) {
               <h3 className={styles.hotelName}>{invoice.hotelName}</h3>
               <p className={styles.invoiceNumber}>#{invoice.invoiceNumber}</p>
             </div>
-            <span
-              className={`${styles.badge} ${statusBadgeMap[invoice.status] ?? styles.badgeDraft}`}
-            >
-              {invoice.status}
-            </span>
+            <StatusBadge status={invoice.status} />
           </div>
           <div className={styles.cardBody}>
             <span className={styles.amount}>

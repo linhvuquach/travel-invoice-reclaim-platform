@@ -1,0 +1,83 @@
+.backLink {
+  color: #3b82f6;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.detailCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background: white;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fieldLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.fieldValue {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.amountValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.description {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+
+/* Payment Section */
+.paymentSection {
+  margin-top: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.noPayment {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
+}

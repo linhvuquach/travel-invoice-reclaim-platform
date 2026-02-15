@@ -1,9 +1,11 @@
-import InvoiceForm from "@/components/invoices/InvoiceForm";
-import { useInvoiceFrom } from "@/hooks/useInvoiceForm";
+"use client";
+
 import Link from "next/link";
+import { useInvoiceForm } from "@/hooks/useInvoiceForm";
+import InvoiceForm from "@/components/invoices/InvoiceForm";
 
 export default function NewInvoicePage() {
-  const { state, handleChange, handleSubmit, resetForm } = useInvoiceFrom();
+  const { state, handleChange, handleSubmit, resetForm } = useInvoiceForm();
 
   return (
     <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
