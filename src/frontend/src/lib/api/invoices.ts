@@ -17,7 +17,7 @@ export async function getInvoices(
 }
 
 export async function getInvoiceByid(id: string): Promise<Invoice> {
-  const { data } = await apiClient.get<Invoice>(`/invoices${id}`);
+  const { data } = await apiClient.get<Invoice>(`/invoices/${id}`);
 
   return data;
 }
