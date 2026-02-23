@@ -9,5 +9,5 @@ public class AuditEvent
     public DateTime Timestamp { get; set; }
     public string PerformedBy { get; set; } = string.Empty;
     public Guid? TenantId { get; set; }
-    public Dictionary<string, object>? MetaData { get; set; }
+    public Dictionary<string, object>? Metadata { get; set; }
 }
