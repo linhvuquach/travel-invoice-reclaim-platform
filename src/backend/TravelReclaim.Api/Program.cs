@@ -7,6 +7,7 @@ using TravelReclaim.Application.Invoices.Commands;
 using TravelReclaim.Application.Invoices.Queries;
 using TravelReclaim.Domain.Interfaces;
 using TravelReclaim.Infrastructure;
+using TravelReclaim.Infrastructure.Persistence.MongoDB;
 using TravelReclaim.Infrastructure.Persistence.SqlServer.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
 
+// MongoDB
+builder.Services.AddSingleton<MongoDbContext>();
+
 // Repositories
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 
@@ -42,6 +46,11 @@ builder.Services.AddScoped<IQueryHandler<GetInvoiceByIdQuery, InvoiceResponse>, 
 builder.Services.AddScoped<IQueryHandler<GetInvoicesPagedQuery, PagedResponse<InvoiceResponse>>, GetInvoicesPagedHandler>();
 
 var app = builder.Build();
+
+// Ensure MongoDB indexes (skip in testing environment)
+var mongoContext = app.Services.GetService<MongoDbContext>();
+if (mongoContext is not null)
+    await MongoDbIndexSetup.EnsureIndexesAsync(mongoContext);
 
 // --- Middleware Pipeline ---
 app.UseMiddleware<GlobalExceptionMiddleware>();
