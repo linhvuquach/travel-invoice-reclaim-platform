@@ -1,16 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TravelReclaim.Api.Middleware;
-using TravelReclaim.Application;
-using TravelReclaim.Application.Common.CQRS;
-using TravelReclaim.Application.DTOs;
-using TravelReclaim.Application.Interfaces;
-using TravelReclaim.Application.Invoices.Commands;
-using TravelReclaim.Application.Invoices.Queries;
-using TravelReclaim.Application.Services;
-using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Application.Extensions;
 using TravelReclaim.Infrastructure;
+using TravelReclaim.Infrastructure.Extensions;
 using TravelReclaim.Infrastructure.Persistence.MongoDB;
-using TravelReclaim.Infrastructure.Persistence.SqlServer.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var FRONTEND_POLICY = "AllowFrontend";
@@ -30,25 +23,8 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
-// Infrastructure
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
-
-// MongoDB
-builder.Services.AddSingleton<MongoDbContext>();
-
-// Repositories
-builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
-
-// Services
-builder.Services.AddScoped<IAuditService, AuditService>();
-
-// CQRS Handlers - Commands
-builder.Services.AddScoped<ICommandHandler<CreateInvoiceCommand, InvoiceResponse>, CreateInvoiceHandler>();
-
-// CQRS Handlers - Queries
-builder.Services.AddScoped<IQueryHandler<GetInvoiceByIdQuery, InvoiceResponse>, GetInvoiceByIdHandler>();
-builder.Services.AddScoped<IQueryHandler<GetInvoicesPagedQuery, PagedResponse<InvoiceResponse>>, GetInvoicesPagedHandler>();
+builder.Services.AddPersistenceService(builder.Configuration);
+builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -75,3 +51,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program accesible to integration tests
+public partial class Program { }

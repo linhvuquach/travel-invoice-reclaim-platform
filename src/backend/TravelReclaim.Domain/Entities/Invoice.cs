@@ -50,7 +50,7 @@ public class Invoice
         Status = InvoiceStatus.Validated;
     }
 
-    public void MarkAsRejected()
+    public void MarkAsRejected(string reason)
     {
         CheckValidStatus(InvoiceStatus.Submitted);
 
