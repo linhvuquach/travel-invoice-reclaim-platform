@@ -78,7 +78,7 @@ namespace TravelReclaim.Application.Reclaims.Commands
 
             // Re-fetch with navigation for mapping
             var savedReclaim = await reclaimRepository.GetByIdWithInvoiceAsync(reclaim.Id, ct);
-            reclaimResponse = ReclaimMapper.ToResponse(savedReclaim);
+            reclaimResponse = ReclaimMapper.ToResponse(savedReclaim!);
 
             await auditService.LogEventAsync(new AuditEvent
             {
