@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TravelReclaim.Domain\TravelReclaim.Domain.csproj" />
+    <ProjectReference Include="..\TravelReclaim.Infrastructure\TravelReclaim.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

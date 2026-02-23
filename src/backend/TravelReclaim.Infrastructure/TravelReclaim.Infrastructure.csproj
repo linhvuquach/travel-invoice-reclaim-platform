@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\TravelReclaim.Application\TravelReclaim.Application.csproj" />
     <ProjectReference Include="..\TravelReclaim.Domain\TravelReclaim.Domain.csproj" />
   </ItemGroup>
 

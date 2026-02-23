@@ -3,8 +3,10 @@ using TravelReclaim.Api.Middleware;
 using TravelReclaim.Application;
 using TravelReclaim.Application.Common.CQRS;
 using TravelReclaim.Application.DTOs;
+using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Application.Invoices.Commands;
 using TravelReclaim.Application.Invoices.Queries;
+using TravelReclaim.Application.Services;
 using TravelReclaim.Domain.Interfaces;
 using TravelReclaim.Infrastructure;
 using TravelReclaim.Infrastructure.Persistence.MongoDB;
@@ -37,6 +39,9 @@ builder.Services.AddSingleton<MongoDbContext>();
 
 // Repositories
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+
+// Services
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // CQRS Handlers - Commands
 builder.Services.AddScoped<ICommandHandler<CreateInvoiceCommand, InvoiceResponse>, CreateInvoiceHandler>();
