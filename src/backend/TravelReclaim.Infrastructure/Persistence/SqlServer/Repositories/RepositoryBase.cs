@@ -32,9 +32,9 @@ public class RepositoryBase<T> : IRepository<T> where T : class
         return await Dbset.AsNoTracking().ToListAsync(ct);
     }
 
-    public Task<T> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return await Dbset.FindAsync([id], ct);
     }
 
     public async Task UpdateAsync(T entity, CancellationToken ct = default)

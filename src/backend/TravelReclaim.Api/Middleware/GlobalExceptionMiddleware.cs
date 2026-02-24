@@ -56,6 +56,10 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
         else
             logger.LogWarning("Handled exception: {ExceptionType} - {Message}", exception.GetType().Name, exception.Message);
+
+        context.Response.StatusCode = problemDetails.Status ?? 500;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problemDetails);
     }
 
     private ProblemDetails CreateInternalError(HttpContext context, Exception exception)
