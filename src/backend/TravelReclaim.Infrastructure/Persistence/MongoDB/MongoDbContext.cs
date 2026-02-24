@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
-using TravelReclaim.Domain;
 using TravelReclaim.Domain.Entities;
+using GuidRepresentation = MongoDB.Bson.GuidRepresentation;
 
 namespace TravelReclaim.Infrastructure.Persistence.MongoDB;
 
@@ -37,7 +38,12 @@ public class MongoDbContext
             {
                 cm.AutoMap();
                 cm.MapIdMember(c => c.Id)
-                    .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    .SetSerializer(new StringSerializer(BsonType.ObjectId))
+                    .SetIdGenerator(StringObjectIdGenerator.Instance);
+                cm.MapMember(c => c.EntityId)
+                    .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                cm.MapMember(c => c.TenantId)
+                    .SetSerializer(new NullableSerializer<Guid>(new GuidSerializer(GuidRepresentation.Standard)));
                 cm.SetIgnoreExtraElements(true);
             });
         }
@@ -48,7 +54,12 @@ public class MongoDbContext
             {
                 cm.AutoMap();
                 cm.MapIdMember(c => c.Id)
-                    .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    .SetSerializer(new StringSerializer(BsonType.ObjectId))
+                    .SetIdGenerator(StringObjectIdGenerator.Instance);
+                cm.MapMember(c => c.InvoiceId)
+                    .SetSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                cm.MapMember(c => c.TenantId)
+                    .SetSerializer(new NullableSerializer<Guid>(new GuidSerializer(GuidRepresentation.Standard)));
                 cm.SetIgnoreExtraElements(true);
             });
         }
