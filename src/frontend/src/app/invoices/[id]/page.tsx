@@ -9,6 +9,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import styles from "@/styles/detail.module.css";
+import ProcessReclaimButton from "@/components/reclaims/ProcessReclaimButton";
 
 export default function InvoiceDetailPage({
   params,
@@ -35,6 +36,10 @@ export default function InvoiceDetailPage({
 
       <InvoiceDetail invoice={invoice} />
       <PaymentDetail payment={invoice.payment} currency={invoice.currency} />
+      <ProcessReclaimButton
+        invoiceId={invoice.id}
+        invoiceStatus={invoice.status}
+      />
     </main>
   );
 }
