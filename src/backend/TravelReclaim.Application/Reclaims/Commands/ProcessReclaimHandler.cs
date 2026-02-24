@@ -76,6 +76,9 @@ namespace TravelReclaim.Application.Reclaims.Commands
             var reclaim = Reclaim.Create(invoice.Id, invoice.VatAmount);
             await reclaimRepository.AddAsync(reclaim, ct);
 
+            invoice.MarkAsReclaimPending();
+            await invoiceRepository.UpdateAsync(invoice, ct);
+
             // Re-fetch with navigation for mapping
             var savedReclaim = await reclaimRepository.GetByIdWithInvoiceAsync(reclaim.Id, ct);
             reclaimResponse = ReclaimMapper.ToResponse(savedReclaim!);
