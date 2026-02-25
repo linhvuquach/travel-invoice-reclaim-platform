@@ -1,16 +1,16 @@
 using TravelReclaim.Application.Common.CQRS;
 using TravelReclaim.Application.DTOs;
 using TravelReclaim.Application.Exceptions;
-using TravelReclaim.Application.Interfaces;
-using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 
 namespace TravelReclaim.Application.Reclaims.Commands;
 
 public class ApproveReclaimHandler(
     IReclaimRepository reclaimRepository,
     IInvoiceRepository invoiceRepository,
-    IAuditService auditService
+    IEventBus eventBus
 ) : ICommandHandler<ApproveReclaimCommand, ReclaimResponse>
 {
     public async Task<ReclaimResponse> HandleAsync(ApproveReclaimCommand command, CancellationToken ct = default)
@@ -25,13 +25,10 @@ public class ApproveReclaimHandler(
         invoice!.MarkAsReclaimed();
         await invoiceRepository.UpdateAsync(invoice, ct);
 
-        await auditService.LogEventAsync(new AuditEvent
-        {
-            EntityId = reclaim.Id,
-            EntityType = "Reclaim",
-            Action = "Approved",
-            PerformedBy = command.ProcessedBy
-        });
+        await eventBus.PublishAsync(new ReclaimApprovedEvent(
+            ReclaimId: reclaim.Id,
+            ApprovedBy: command.ProcessedBy,
+            Timestamp: DateTime.UtcNow), ct);
 
         var saved = await reclaimRepository.GetByIdWithInvoiceAsync(reclaim.Id, ct);
         return ReclaimMapper.ToResponse(saved!);

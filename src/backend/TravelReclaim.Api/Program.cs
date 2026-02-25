@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using TravelReclaim.Api.Middleware;
 using TravelReclaim.Application.Extensions;
 using TravelReclaim.Infrastructure;
+using TravelReclaim.Infrastructure.Events.Consumers;
 using TravelReclaim.Infrastructure.Extensions;
 using TravelReclaim.Infrastructure.Persistence.MongoDB;
 
@@ -21,6 +23,25 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000")
         .AllowAnyHeader()
         .AllowAnyMethod());
+});
+
+// Event bus - RabbitMQ via MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<InvoiceCreatedConsumer>();
+    x.AddConsumer<ReclaimProcessedConsumer>();
+    x.AddConsumer<ReclaimApprovedConsumer>();
+    x.AddConsumer<ReclaimRejectedConsumer>();
+
+    x.UsingRabbitMq((ctx, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost", "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
+            h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
+        });
+        cfg.ConfigureEndpoints(ctx);
+    });
 });
 
 builder.Services.AddPersistenceService(builder.Configuration);

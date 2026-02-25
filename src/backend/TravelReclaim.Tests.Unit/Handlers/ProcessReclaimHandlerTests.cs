@@ -9,6 +9,8 @@ using TravelReclaim.Application.Reclaims.Commands;
 using TravelReclaim.Domain;
 using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 using TravelReclaim.Tests.Unit.Helpers;
 
 namespace TravelReclaim.Tests.Unit.Handlers;
@@ -19,9 +21,10 @@ public class ProcessReclaimHandlerTests
     private readonly Mock<IInvoiceRepository> _invoiceRepoMock = new();
     private readonly Mock<IReclaimRepository> _reclaimRepoMock = new();
     private readonly Mock<IAuditService> _auditServiceMock = new();
+    private readonly Mock<IEventBus> _eventBusMock = new();
 
     private ProcessReclaimHandler CreateHandler(params IValidationRule[] rules)
-        => new(_invoiceRepoMock.Object, _reclaimRepoMock.Object, rules, _auditServiceMock.Object);
+        => new(_invoiceRepoMock.Object, _reclaimRepoMock.Object, rules, _auditServiceMock.Object, _eventBusMock.Object);
 
     [Fact]
     public async Task HandleAsync_AllRulePass_CreatesReclaimWithPendingStatus()
@@ -125,7 +128,7 @@ public class ProcessReclaimHandlerTests
 
         var result = await handler.HandleAsync(new ProcessReclaimCommand(invoiceId));
 
-        // Then
+        // Validation telemetry stays as a direct call — it carries timing data not suitable for events
         _auditServiceMock.Verify(
             a => a.LogValidationAsync(
                 It.Is<ValidationEvent>(e => e.OverallOutcome == "Passed"),
@@ -133,6 +136,46 @@ public class ProcessReclaimHandlerTests
             ),
             Times.Once
         );
+    }
+
+    [Fact]
+    public async Task HandleAsync_AllRulePass_PublishesReclaimProcessedEvent()
+    {
+        var invoice = TestInvoiceFactory.CreateValid();
+
+        _invoiceRepoMock.Setup(r => r.GetByIdAsync(invoice.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invoice);
+        _reclaimRepoMock.Setup(r => r.AddAsync(It.IsAny<Reclaim>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Reclaim r, CancellationToken _) => r);
+        _reclaimRepoMock.Setup(r => r.GetByIdWithInvoiceAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Reclaim.Create(invoice.Id, 190m));
+
+        var handler = CreateHandler(CreatePassingRule().Object);
+        await handler.HandleAsync(new ProcessReclaimCommand(invoice.Id));
+
+        _eventBusMock.Verify(
+            b => b.PublishAsync(
+                It.Is<ReclaimProcessedEvent>(e => e.Outcome == "Created" && e.ReclaimId != null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AllRuleFails_PublishesRejectedReclaimEvent()
+    {
+        var invoice = TestInvoiceFactory.CreateValid();
+
+        _invoiceRepoMock.Setup(r => r.GetByIdAsync(invoice.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invoice);
+
+        var handler = CreateHandler(CreateFailingRule("VAT too high").Object);
+        await handler.HandleAsync(new ProcessReclaimCommand(invoice.Id));
+
+        _eventBusMock.Verify(
+            b => b.PublishAsync(
+                It.Is<ReclaimProcessedEvent>(e => e.Outcome == "Rejected" && e.ReclaimId == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     private static Mock<IValidationRule> CreatePassingRule()

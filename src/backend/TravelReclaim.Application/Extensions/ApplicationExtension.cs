@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using TravelReclaim.Application.Common.CQRS;
 using TravelReclaim.Application.DTOs;
+using TravelReclaim.Application.Events.Handlers;
 using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Application.Invoices.Commands;
 using TravelReclaim.Application.Invoices.Queries;
@@ -10,6 +12,9 @@ using TravelReclaim.Application.Reclaims.Queries;
 using TravelReclaim.Application.Services;
 using TravelReclaim.Application.Validators;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 using TravelReclaim.Infrastructure.Persistence.SqlServer.Repositories;
 
 namespace TravelReclaim.Application.Extensions
@@ -49,6 +54,14 @@ namespace TravelReclaim.Application.Extensions
             // CQRS Handlers — Reclaim Queries
             serviceCollection.AddScoped<IQueryHandler<GetReclaimByIdQuery, ReclaimResponse>, GetReclaimByIdHandler>();
             serviceCollection.AddScoped<IQueryHandler<GetReclaimsPagedQuery, PagedResponse<ReclaimResponse>>, GetReclaimsPagedHandler>();
+
+            /* Event communication with RabbitMQ*/
+            serviceCollection.AddScoped<IEventBus, RabbitMqEventBus>();
+            // Application event handlers (scoped, resolved by MassTransit consumers)
+            serviceCollection.AddScoped<IEventHandler<InvoiceCreatedEvent>, InvoiceCreateEventHandler>();
+            serviceCollection.AddScoped<IEventHandler<ReclaimProcessedEvent>, ReclaimProcessedEventHandler>();
+            serviceCollection.AddScoped<IEventHandler<ReclaimApprovedEvent>, ReclaimApprovedEventHandler>();
+            serviceCollection.AddScoped<IEventHandler<ReclaimRejectedEvent>, ReclaimRejectedEventHandler>();
         }
 
         private static IServiceCollection RegisterInvoiceValidators(this IServiceCollection services, params Type[] validatorTypes)

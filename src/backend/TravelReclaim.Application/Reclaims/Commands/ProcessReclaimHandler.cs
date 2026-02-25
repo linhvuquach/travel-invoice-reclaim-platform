@@ -6,6 +6,8 @@ using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Domain;
 using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 
 namespace TravelReclaim.Application.Reclaims.Commands
 {
@@ -13,7 +15,8 @@ namespace TravelReclaim.Application.Reclaims.Commands
         IInvoiceRepository invoiceRepository,
         IReclaimRepository reclaimRepository,
         IEnumerable<IValidationRule> validationRules,
-        IAuditService auditService
+        IAuditService auditService,
+        IEventBus eventBus
     ) : ICommandHandler<ProcessReclaimCommand, ProcessReclaimResponse>
     {
         public async Task<ProcessReclaimResponse> HandleAsync(ProcessReclaimCommand command, CancellationToken ct = default)
@@ -33,7 +36,7 @@ namespace TravelReclaim.Application.Reclaims.Commands
 
             var allPassed = validationResults.All(r => r.Passed);
 
-            // Log validation event to MongoDB
+            // Validation telemetry goes direct — it carries structured timing data that belongs here
             await auditService.LogValidationAsync(new ValidationEvent
             {
                 InvoiceId = invoice.Id,
@@ -83,13 +86,13 @@ namespace TravelReclaim.Application.Reclaims.Commands
             var savedReclaim = await reclaimRepository.GetByIdWithInvoiceAsync(reclaim.Id, ct);
             reclaimResponse = ReclaimMapper.ToResponse(savedReclaim!);
 
-            await auditService.LogEventAsync(new AuditEvent
-            {
-                EntityId = reclaim.Id,
-                EntityType = "Reclaim",
-                Action = "Created",
-                PerformedBy = "system"
-            }, ct);
+            await eventBus.PublishAsync(new ReclaimProcessedEvent(
+                ReclaimId: reclaim.Id,
+                InvoiceId: invoice.Id,
+                Outcome: "Created",
+                RejectionReason: null,
+                PerformedBy: "system",
+                Timestamp: DateTime.UtcNow), ct);
 
             return reclaimResponse;
         }
@@ -100,14 +103,13 @@ namespace TravelReclaim.Application.Reclaims.Commands
             invoice.MarkAsRejected(failedReasons);
             await invoiceRepository.UpdateAsync(invoice, ct);
 
-            await auditService.LogEventAsync(new AuditEvent
-            {
-                EntityId = invoice.Id,
-                EntityType = "Invoice",
-                Action = "Rejected",
-                PerformedBy = "system",
-                Metadata = new Dictionary<string, object> { ["rejectionReason"] = failedReasons }
-            }, ct);
+            await eventBus.PublishAsync(new ReclaimProcessedEvent(
+                ReclaimId: null,
+                InvoiceId: invoice.Id,
+                Outcome: "Rejected",
+                RejectionReason: failedReasons,
+                PerformedBy: "system",
+                Timestamp: DateTime.UtcNow), ct);
         }
     }
 }

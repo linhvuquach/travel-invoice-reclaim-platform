@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Moq;
-using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Application.Invoices.Commands;
 using TravelReclaim.Domain;
-using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 
 namespace TravelReclaim.Tests.Unit.Handlers;
 
@@ -15,9 +11,9 @@ public class CreateInvoiceHandlerTests
 {
     // Mocking
     private readonly Mock<IInvoiceRepository> _invoiceRepoMock = new();
-    private readonly Mock<IAuditService> _auditServiceMock = new();
+    private readonly Mock<IEventBus> _eventBusMock = new();
 
-    private CreateInvoiceHandler CreateHandler() => new(_invoiceRepoMock.Object, _auditServiceMock.Object);
+    private CreateInvoiceHandler CreateHandler() => new(_invoiceRepoMock.Object, _eventBusMock.Object);
 
     [Fact]
     public async Task HandleAsync_ValidCommand_ReturnsInvoiceResponse()
@@ -44,7 +40,7 @@ public class CreateInvoiceHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ValidCommand_LogsAuditEvent()
+    public async Task HandleAsync_ValidCommand_PublishesInvoiceCreatedEvent()
     {
         // Given
         _invoiceRepoMock
@@ -60,9 +56,9 @@ public class CreateInvoiceHandlerTests
         await handler.HandleAsync(command);
 
         // Then
-        _auditServiceMock.Verify(
-            a => a.LogEventAsync(
-                It.Is<AuditEvent>(e => e.EntityType == "Invoice" && e.Action == "Created"),
+        _eventBusMock.Verify(
+            a => a.PublishAsync(
+                It.Is<InvoiceCreatedEvent>(e => e.HotelName == "Test Hotel"),
                 It.IsAny<CancellationToken>()
             ),
             Times.Once

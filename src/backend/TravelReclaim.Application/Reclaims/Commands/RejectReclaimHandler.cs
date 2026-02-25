@@ -4,12 +4,14 @@ using TravelReclaim.Application.Exceptions;
 using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 
 namespace TravelReclaim.Application.Reclaims.Commands;
 
 public class RejectReclaimHandler(
     IReclaimRepository reclaimRepository,
-    IAuditService auditService
+    IEventBus eventBus
 ) : ICommandHandler<RejectReclaimCommand, ReclaimResponse>
 {
     public async Task<ReclaimResponse> HandleAsync(RejectReclaimCommand command, CancellationToken ct = default)
@@ -20,14 +22,11 @@ public class RejectReclaimHandler(
         reclaim.Reject(command.Reason, command.ProcessedBy);
         await reclaimRepository.UpdateAsync(reclaim, ct);
 
-        await auditService.LogEventAsync(new AuditEvent
-        {
-            EntityId = reclaim.Id,
-            EntityType = "Reclaim",
-            Action = "Rejected",
-            PerformedBy = command.ProcessedBy,
-            Metadata = new Dictionary<string, object> { ["rejectReason"] = command.Reason }
-        }, ct);
+        await eventBus.PublishAsync(new ReclaimRejectedEvent(
+            ReclaimId: reclaim.Id,
+            Reason: command.Reason,
+            RejectedBy: command.ProcessedBy,
+            Timestamp: DateTime.UtcNow), ct);
 
         var saved = await reclaimRepository.GetByIdWithInvoiceAsync(reclaim.Id, ct);
         return ReclaimMapper.ToResponse(saved!);

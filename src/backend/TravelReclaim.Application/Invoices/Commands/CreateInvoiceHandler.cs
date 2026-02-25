@@ -1,14 +1,14 @@
 using TravelReclaim.Application.Common.CQRS;
 using TravelReclaim.Application.DTOs;
-using TravelReclaim.Application.Interfaces;
 using TravelReclaim.Domain;
-using TravelReclaim.Domain.Entities;
 using TravelReclaim.Domain.Interfaces;
+using TravelReclaim.Infrastructure.Events.Abstractions;
+using TravelReclaim.Infrastructure.Events.Models;
 
 namespace TravelReclaim.Application.Invoices.Commands;
 
 public class CreateInvoiceHandler(IInvoiceRepository invoiceRepository,
-    IAuditService auditService) : ICommandHandler<CreateInvoiceCommand, InvoiceResponse>
+    IEventBus eventBus) : ICommandHandler<CreateInvoiceCommand, InvoiceResponse>
 {
     public async Task<InvoiceResponse> HandleAsync(CreateInvoiceCommand command, CancellationToken ct = default)
     {
@@ -23,13 +23,12 @@ public class CreateInvoiceHandler(IInvoiceRepository invoiceRepository,
 
         await invoiceRepository.AddAsync(invoice, ct);
 
-        await auditService.LogEventAsync(new AuditEvent
-        {
-            EntityId = invoice.Id,
-            EntityType = "Invoice",
-            Action = "Created",
-            PerformedBy = "system" // JWT user later in Phase 3
-        }, ct);
+        await eventBus.PublishAsync(new InvoiceCreatedEvent(
+                invoice.Id,
+                invoice.HotelName,
+                "system", // JWT user later in Phase 3,
+                DateTime.UtcNow
+            ), ct);
 
         return invoice.ToResponse();
     }
